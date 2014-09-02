@@ -2,10 +2,10 @@ require 'omniauth-oauth2'
 
 module OmniAuth
   module Strategies
-    class Weixin < OmniAuth::Strategies::OAuth2
+    class Wechat < OmniAuth::Strategies::OAuth2
       option :client_options, {
         :site => 'https://api.weixin.qq.com',
-        :authorize_url => 'https://open.weixin.qq.com/connect/oauth2/authorize',
+        :authorize_url => 'https://open.weixin.qq.com/connect/qrconnect',
         :token_url => "https://api.weixin.qq.com/sns/oauth2/access_token"
       }
 
@@ -19,9 +19,9 @@ module OmniAuth
         options[:scope] = "snsapi_userinfo" if options[:scope].nil?
 
         {
-          :appid => options.client_id, 
-          :redirect_uri => callback_url, 
-          :response_type => 'code', 
+          :appid => options.client_id,
+          :redirect_uri => callback_url,
+          :response_type => 'code',
           :scope => options[:scope]
         }
       end
@@ -38,21 +38,21 @@ module OmniAuth
           {:mode => :query, :param_name => 'access_token'}
         )
       end
-      
+
       uid do
         @uid ||= begin
           access_token["openid"]
         end
       end
 
-      info do 
-        { 
+      info do
+        {
           :nickname => raw_info['nickname'],
           :name => raw_info['nickname'],
           :image => raw_info['headimgurl'],
         }
       end
-      
+
       extra do
         {
           :raw_info => raw_info
@@ -71,4 +71,4 @@ module OmniAuth
   end
 end
 
-OmniAuth.config.add_camelization('weixin', 'Weixin')
+OmniAuth.config.add_camelization('wechat', 'Wechat')

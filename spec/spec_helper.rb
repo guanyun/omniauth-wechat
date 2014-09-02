@@ -12,7 +12,7 @@ require 'rspec'
 require 'rack/test'
 require 'webmock/rspec'
 require 'omniauth'
-require 'omniauth-weixin'
+require 'omniauth-wechat'
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
