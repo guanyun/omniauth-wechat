@@ -54,12 +54,14 @@ module OmniAuth
       end
 
       def raw_info
-        @raw_info ||= begin
-          response =  access_token.get(
-            '/sns/userinfo',
-             {:params => {:openid => uid}, :parse => :json}
-          ).parsed
-        end
+        @raw_info ||= get_user_info
+      end
+
+      def get_user_info
+        access_token.get(
+          '/sns/userinfo',
+           {:params => {:openid => uid}, :parse => :json}
+        ).parsed
       end
     end
   end
