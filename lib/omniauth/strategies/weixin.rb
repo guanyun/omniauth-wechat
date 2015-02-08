@@ -9,14 +9,6 @@ module OmniAuth
         :token_url => "https://api.weixin.qq.com/sns/oauth2/access_token"
       }
     end
-
-    def get_user_info
-      if options[:scope] == 'snsapi_base'
-        Wechat.api.user(uid)
-      else
-        super
-      end
-    end
   end
 end
 

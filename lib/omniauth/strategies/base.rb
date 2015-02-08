@@ -58,11 +58,17 @@ module OmniAuth
       end
 
       def get_user_info
-        access_token.get(
-          '/sns/userinfo',
-           {:params => {:openid => uid}, :parse => :json}
-        ).parsed
+        # for weixin
+        if options[:scope] == 'snsapi_base'
+          ::Wechat.api.user(uid) rescue { openid: uid }
+        else
+          access_token.get(
+            '/sns/userinfo',
+             {:params => {:openid => uid}, :parse => :json}
+          ).parsed
+        end
       end
+
     end
   end
 end
