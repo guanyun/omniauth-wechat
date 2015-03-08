@@ -1,74 +1,58 @@
-require 'omniauth-oauth2'
+require "omniauth-oauth2"
 
 module OmniAuth
   module Strategies
     class Base < OmniAuth::Strategies::OAuth2
-      option :provider_ignores_state, true
-
-      def request_phase
-        redirect client.authorize_url(authorize_params) + "#wechat_redirect"
-      end
-
-      def authorize_params
-        options[:scope] = "snsapi_userinfo" if options[:scope].nil?
-
-        {
-          :appid => options.client_id,
-          :redirect_uri => callback_url,
-          :response_type => 'code',
-          :scope => options[:scope]
-        }
-      end
-
-      def token_params
-        params = super
-        params.merge({:appid => options.client_id, :secret => options.client_secret})
-      end
-
-      def build_access_token
-        client.auth_code.get_token(
-          request.params['code'],
-          {:redirect_uri => callback_url, :parse => :json}.merge(token_params.to_hash(:symbolize_keys => true)),
-          {:mode => :query, :param_name => 'access_token'}
-        )
-      end
+      option :token_params, {parse: :json}
 
       uid do
-        @uid ||= begin
-          access_token["openid"]
-        end
+        raw_info['openid']
       end
 
       info do
         {
-          :nickname => raw_info['nickname'],
-          :name => raw_info['nickname'],
-          :image => raw_info['headimgurl'],
+          nickname:   raw_info['nickname'],
+          sex:        raw_info['sex'],
+          province:   raw_info['province'],
+          city:       raw_info['city'],
+          country:    raw_info['country'],
+          headimgurl: raw_info['headimgurl']
         }
       end
 
       extra do
-        {
-          :raw_info => raw_info
-        }
+        {raw_info: raw_info}
+      end
+
+      def request_phase
+        params = client.auth_code.authorize_params.merge(redirect_uri: callback_url).merge(authorize_params)
+        params["appid"] = params.delete("client_id")
+        redirect client.authorize_url(params)
       end
 
       def raw_info
-        @raw_info ||= get_user_info
-      end
-
-      def get_user_info
-        # for weixin
-        if options[:scope] == 'snsapi_base'
-          ::Wechat.api.user(uid) rescue { openid: uid }
-        else
-          access_token.get(
-            '/sns/userinfo',
-             {:params => {:openid => uid}, :parse => :json}
-          ).parsed
+        @uid ||= access_token["openid"]
+        @raw_info ||= begin
+          access_token.options[:mode] = :query
+          if %w(snsapi_userinfo snsapi_login).include? access_token["scope"]
+            response = access_token.get("/sns/userinfo", :params => {"openid" => @uid}, parse: :text)
+            @raw_info = JSON.parse(response.body.gsub(/[\u0000-\u001f]+/, ''))
+          else
+            @raw_info = {"openid" => @uid }
+          end
         end
       end
 
+      protected
+      def build_access_token
+        params = {
+          'appid' => client.id,
+          'secret' => client.secret,
+          'code' => request.params['code'],
+          'grant_type' => 'authorization_code'
+          }.merge(token_params.to_hash(symbolize_keys: true))
+        client.get_token(params, deep_symbolize(options.auth_token_params))
+      end
     end
   end
 end
