@@ -4,6 +4,7 @@ module OmniAuth
   module Strategies
     class Base < OmniAuth::Strategies::OAuth2
       option :token_params, {parse: :json}
+      option :provider_ignores_state, true
 
       uid do
         raw_info['openid']
