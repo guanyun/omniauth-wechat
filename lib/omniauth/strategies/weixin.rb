@@ -46,7 +46,7 @@ module OmniAuth
           access_token.options[:mode] = :query
           response = access_token.get("/sns/userinfo", :params => {"openid" => @uid}, parse: :text)
           @raw_info = JSON.parse(response.body.gsub(/[\u0000-\u001f]+/, ''))
-          if @raw_info[:errcode]
+          if @raw_info["errcode"]
             if access_token["unionid"]
               @raw_info = {"openid" => @uid, "unionid" => access_token["unionid"] }
             else
